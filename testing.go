@@ -84,7 +84,16 @@ func GetAuthEnvTokenHandler(t *testing.T) *httptest.Server {
 		if headerAuth != expected {
 			t.Errorf("Authorization header = %q; want %q", headerAuth, expected)
 		}
-
+		switch string(body) {
+		case "grant_type=password&password=madeuppassword&scope=infrastructure&username=itsy%40bitzy.com":
+			w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+			w.Write([]byte("access_token=90d24460d14870c08c81352a05dedd3465940a7c&scope=user&token_type=bearer"))
+		case "grant_type=password&password=&scope=infrastructure&username=itsy%40bitzy.com":
+			w.WriteHeader(http.StatusUnauthorized)
+		default:
+			t.Errorf("Unexpected res.Body = %q", string(body))
+			w.WriteHeader(http.StatusUnauthorized)
+		}
 	}))
 	SetAuthEnvAPIURL(ts.URL)
 	SetAuthEnvAccount()
